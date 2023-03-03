@@ -4,11 +4,12 @@ const express = require("express");
 const path = require("path");
 const session = require("express-session");
 const passport = require("passport");
+require("dotenv").config();
 const LocalStrategy = require("passport-local").Strategy;
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const mongoDb = "mongodb+srv://walter:287vWo6Ynp9qZQT7@cluster0.fy2x0qq.mongodb.net/?retryWrites=true&w=majority";
+const mongoDb = `mongodb+srv://${process.env.username}:${process.env.password}@cluster0.fy2x0qq.mongodb.net/?retryWrites=true&w=majority`;
 mongoose.connect(mongoDb, { useUnifiedTopology: true, useNewUrlParser: true });
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "mongo connection error"));
