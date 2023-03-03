@@ -5,6 +5,7 @@ const path = require("path");
 const session = require("express-session");
 const passport = require("passport");
 require("dotenv").config();
+const bcrypt = require("bcryptjs");
 const LocalStrategy = require("passport-local").Strategy;
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
@@ -26,6 +27,7 @@ const app = express();
 app.set("views", __dirname);
 app.set("view engine", "ejs");
 
+/*
 passport.use(
   new LocalStrategy((username, password, done) => {
     User.findOne({ username:username })
@@ -41,6 +43,23 @@ passport.use(
     .catch(err => {
       return done (err);
     })
+  })
+)
+*/
+passport.use( 
+  new LocalStrategy( async (username, password, done) => {
+    try {
+      const user = await User.findOne({ username:username })
+      if (!user) {
+        return done (null, false, { message: "Incorrect username" });
+      }
+      if (user.password !== password) {
+        return done (null, false, { message: "Incorrect password" });
+      }
+      return done(null, user);
+    } catch (err) {
+      return done (err); 
+    }
   })
 )
 
@@ -79,19 +98,24 @@ app.get("/log-out", (req, res, next) => {
     res.redirect("/");
   })
 });
-app.post("/sign-up", async (req, res, next) => {
-  const user = new User({
-    username: req.body.username,
-    password: req.body.password
-  });
-  try {
-    const result = await user.save();
-    console.log(result);
-    res.redirect("/");
-  } catch (err) {
-    console.error("Sum ting wong");
-    handleError(err);
-  };
+app.post("/sign-up", (req, res, next) => {
+  bcrypt.hash(req.body.password, 10, async (err, hashedPW) => {
+    if (err) {
+      return next(err);
+    }
+    const user = new User({
+      username: req.body.username,
+      password: hashedPW
+    });
+    try {
+      const result = await user.save();
+      console.log(result);
+      res.redirect("/");
+    } catch (err) {
+      console.error("Sum ting wong");
+      handleError(err);
+    };
+  })
 });
 app.post(
   "/log-in",
